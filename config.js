@@ -9,5 +9,5 @@
 // See apps-script.gs in this folder for a ready-to-paste backend.
 
 window.JOURNAL_CONFIG = {
-  scriptUrl: "https://docs.google.com/spreadsheets/d/1M3u0FeRbqowV81qm-twfcH0NU6mQ5l-PBinKSRuE3SA/edit?usp=drivesdk"  // e.g. "https://script.google.com/macros/s/AKfycb.../exec"
+  scriptUrl: "https://script.google.com/u/0/home/projects/1HUB2LVltp8pBpXQwFruXqhZUM5AswvMRuMqbyvA1YDZ5SIDrJHwCFx8f/edit"  // e.g. "https://script.google.com/macros/s/AKfycb.../exec"
 };
