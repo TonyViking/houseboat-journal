@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+<meta name="theme-color" content="#f3e9d8" />
+<title>Houseboat — A Journal</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=Caveat:wght@400;600&family=Quattrocento+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<!-- Optional config file - if it exists, it sets window.JOURNAL_CONFIG.scriptUrl -->
+<script src="config.js" onerror="this.remove()"></script>
+
+<style>
+  :root {
+    --paper: #f3e9d8;
+    --paper-dark: #e8dcc4;
+    --ink: #2d1f17;
+    --ink-soft: #5b4636;
+    --coral: #d96941;
+    --coral-dark: #b3502f;
+    --ochre: #d9a441;
+    --sage: #7a8c5a;
+    --plum: #6e4960;
+    --cream: #faf3e3;
+  }
+
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Quattrocento Sans', Georgia, serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* paper grain */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      radial-gradient(rgba(60,40,20,0.06) 1px, transparent 1px),
+      radial-gradient(rgba(60,40,20,0.04) 1px, transparent 1px);
+    background-size: 3px 3px, 7px 7px;
+    background-position: 0 0, 1px 2px;
+    mix-blend-mode: multiply;
+    opacity: 0.7;
+  }
+
+  .display { font-family: 'Fraunces', 'Times New Roman', serif; font-variation-settings: "opsz" 144; letter-spacing: -0.01em; }
+  .hand { font-family: 'Caveat', cursive; }
+  .body { font-family: 'Quattrocento Sans', Georgia, serif; }
+
+  /* Hand-drawn dashed border */
+  .dashed-card {
+    border: 2px dashed var(--ink-soft);
+    border-radius: 18px;
+    background: var(--cream);
+    position: relative;
+  }
+  .dashed-card::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(91,70,54,0.15);
+    border-radius: 14px;
+    pointer-events: none;
+  }
+
+  /* Wobbly button */
+  .btn {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    background: var(--cream);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    padding: 0.7rem 1.4rem;
+    box-shadow: 3px 3px 0 var(--ink);
+    transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .btn:hover { background: #fff7e3; }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn-primary { background: var(--coral); color: var(--cream); border-color: var(--ink); }
+  .btn-primary:hover { background: var(--coral-dark); }
+  .btn-ghost { background: transparent; box-shadow: none; border: 2px solid transparent; }
+  .btn-ghost:hover { background: rgba(0,0,0,0.04); }
+
+  .tile {
+    background: var(--cream);
+    border: 2px solid var(--ink);
+    border-radius: 22px;
+    box-shadow: 4px 4px 0 var(--ink);
+    padding: 1.25rem;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .tile:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--ink); }
+  .tile-num {
+    position: absolute;
+    top: 0.5rem; right: 0.9rem;
+    font-family: 'Caveat', cursive;
+    font-size: 2rem;
+    color: var(--ink-soft);
+    opacity: 0.55;
+  }
+
+  input[type=text], input[type=number], textarea, select {
+    background: #fffdf6;
+    border: 2px solid var(--ink-soft);
+    border-radius: 12px;
+    padding: 0.7rem 0.9rem;
+    font-family: 'Quattrocento Sans', Georgia, serif;
+    color: var(--ink);
+    width: 100%;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--coral);
+    box-shadow: 0 0 0 3px rgba(217,105,65,0.2);
+  }
+
+  textarea { line-height: 1.55; resize: vertical; }
+
+  .marker-heading {
+    display: inline-block;
+    position: relative;
+    padding: 0.1em 0.3em;
+  }
+  .marker-heading::before {
+    content: "";
+    position: absolute;
+    inset: 60% -0.05em 0.1em -0.05em;
+    background: rgba(217,164,65,0.45);
+    border-radius: 3px;
+    z-index: -1;
+  }
+
+  .tape {
+    position: absolute;
+    width: 80px; height: 22px;
+    background: rgba(217,164,65,0.55);
+    border-left: 1px dashed rgba(0,0,0,0.1);
+    border-right: 1px dashed rgba(0,0,0,0.1);
+    top: -10px;
+    transform: rotate(-3deg);
+  }
+
+  /* Breathing circle */
+  @keyframes breatheIn {
+    0% { transform: scale(0.5); }
+    100% { transform: scale(1); }
+  }
+  @keyframes breatheOut {
+    0% { transform: scale(1); }
+    100% { transform: scale(0.5); }
+  }
+  .breathe-in { animation: breatheIn 4s ease-in-out forwards; }
+  .breathe-hold { transform: scale(1); }
+  .breathe-out { animation: breatheOut 4s ease-in-out forwards; }
+  .breathe-hold-out { transform: scale(0.5); }
+
+  /* Loading dots */
+  @keyframes pulse-dot {
+    0%, 80%, 100% { opacity: 0.3; }
+    40% { opacity: 1; }
+  }
+  .dot { animation: pulse-dot 1.4s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  .entry-card {
+    background: #fffdf6;
+    border: 1.5px solid var(--ink-soft);
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    position: relative;
+    box-shadow: 2px 2px 0 rgba(45,31,23,0.15);
+  }
+
+  .character-card {
+    background: #fffdf6;
+    border: 2px solid var(--ink);
+    border-radius: 18px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+  .character-card:hover { transform: translateY(-2px); }
+
+  /* Status badge */
+  .badge {
+    font-family: 'Caveat', cursive;
+    font-size: 1rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    border: 1.5px solid currentColor;
+  }
+
+  /* Hide scrollbars in carousels but keep functional */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Smooth fade-in for screens */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .screen { animation: fadeUp 0.35s ease; }
+
+  /* Sticky header blur */
+  .topbar {
+    backdrop-filter: blur(8px);
+    background: rgba(243,233,216,0.85);
+    border-bottom: 1px solid rgba(91,70,54,0.15);
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+/* =========================================================
+   API LAYER
+   Talks to Google Apps Script if window.JOURNAL_CONFIG.scriptUrl is set;
+   falls back to localStorage transparently otherwise.
+   Apps Script side will receive: { section, action: 'save'|'load', payload }
+========================================================= */
+const SCRIPT_URL = (window.JOURNAL_CONFIG && window.JOURNAL_CONFIG.scriptUrl) || null;
+const LS_PREFIX = 'houseboat_journal:';
+
+const api = {
+  async load(section) {
+    if (SCRIPT_URL) {
+      try {
+        const url = `${SCRIPT_URL}?section=${encodeURIComponent(section)}&action=load`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Network ' + res.status);
+        const data = await res.json();
+        return data.entries || [];
+      } catch (e) {
+        console.warn('Remote load failed, falling back to local:', e);
+      }
+    }
+    const raw = localStorage.getItem(LS_PREFIX + section);
+    return raw ? JSON.parse(raw) : [];
+  },
+  async save(section, entries) {
+    // Always mirror to localStorage so nothing is lost
+    localStorage.setItem(LS_PREFIX + section, JSON.stringify(entries));
+    if (SCRIPT_URL) {
+      try {
+        // Use text/plain to avoid CORS preflight on Apps Script
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ section, action: 'save', entries })
+        });
+      } catch (e) {
+        console.warn('Remote save failed (kept locally):', e);
+      }
+    }
+  }
+};
+
+/* Hook for one section's entries */
+function useSection(section) {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let alive = true;
+    api.load(section).then(data => {
+      if (!alive) return;
+      setEntries(Array.isArray(data) ? data : []);
+      setLoading(false);
+    });
+    return () => { alive = false; };
+  }, [section]);
+  const update = useCallback(async (next) => {
+    setEntries(next);
+    await api.save(section, next);
+  }, [section]);
+  return { entries, update, loading };
+}
+
+const nowISO = () => new Date().toISOString();
+const fmtDate = (iso) => {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch { return iso; }
+};
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+/* =========================================================
+   DATA: characters, bosses, puppets, prompt sets
+========================================================= */
+
+const BOSSES = [
+  { id: 'selma', name: 'Selma the Sensible', color: 'var(--sage)', emoji: '🛟',
+    desc: "Selma makes sure you've got a roof over your head, and that all the leaks in the houseboat are mended. She's concerned with eating, sleeping, not dying. Her other interests include monitoring your bank balance, wearing a helmet, and reminding you that the law does in fact apply to you." },
+  { id: 'luka', name: 'Luka the Liver', color: 'var(--coral)', emoji: '🏄',
+    desc: "Luka is a gnarly surfer bro with a lust for life. He wants the lifestyle you always wanted. Wine tours? Snowboarding? LARPing in the forest? Luka will put that need well and truly ahead of work, money and even other people." },
+  { id: 'freya', name: 'Freya the Friendly', color: 'var(--ochre)', emoji: '🌿',
+    desc: "Freya tells you to lead the houseboat to wherever the most boats are. She wants community, connection, friends, family — all packaged in a cute leafy hippie commune. She'd happily trade a high-paying dream job in a lonely city for a life of busking with your best friends." },
+  { id: 'aziz', name: 'Aziz the Ambitious', color: 'var(--plum)', emoji: '🏆',
+    desc: "Aziz is here to take over the world, win trophies, and get famous. Frat-bro energy. Freya is lame, Luka's lazy, Selma's boring. Listen to him and you'll be hella rich, hella respected, hella swole. Hollywood parties in no time." },
+  { id: 'gilda', name: 'Gilda the Giver', color: '#7a8c5a', emoji: '🤲',
+    desc: "Gilda looks down on Aziz but wouldn't tell him. She wants you to be a good person, chase fulfilment, and that special feeling of doing the right thing. She answers the trolley problem by dismantling the track, saving the people, and recycling the materials to build housing." },
+];
+
+const BOSS_QUESTIONS = [
+  "What does Selma the Sensible want you to do?",
+  "What does Luka the Liver want you to do?",
+  "What does Freya the Friendly want you to do?",
+  "What does Aziz the Ambitious want you to do?",
+  "What does Gilda the Giver want you to do?",
+  "Whose voice matters the most?"
+];
+
+const PUPPETS = [
+  { id: 'nellie', name: 'Nellie the Nihilist',
+    desc: "With every action comes a reaction, and Nellie's reaction is to ask 'Does it even matter?' Quick to remind you we're all going to die — not in a motivating way, but a 'why do anything at all' way. She usually slips in when you're a teenager. She's cool, with carefree attitude, alt-music taste, and the cigarette punctuating her poignant sentences." },
+  { id: 'terry', name: 'Terry the Terrified',
+    desc: "Terry loves to cower in fear from anything scarier than a sunflower. Tall diving board? 'We'll probably break our neck.' X Factor audition? 'You'll be laughed off the stage, lose your job, end up on heroin, dead by next spring.' What he lacks in spine, Terry makes up for in his ability to stop your houseboat from launching." },
+  { id: 'nina', name: 'Nina the Needy',
+    desc: "Every time you finally pick a direction, Nina asks 'Will this make people like us?' If the answer's no, she gets upset — but never enough to annoy anyone. Treading on eggshells, posting popular opinions that didn't need posting, ruminating for hours about that thing you said at 11:03am last Thursday — Nina had her hand in it." },
+  { id: 'dave', name: 'Dave the Distractible',
+    desc: "Dave just wants to drink beer and smoke weed all day, watching TV and scrolling endlessly. Not too fond of reflection. The night before a menacing deadline you've inexplicably gone out to down nineteen margaritas with your rowdiest friends — that unknown reason is Dave." },
+  { id: 'hugo', name: 'Hugo the Hater',
+    desc: "Hugo's aim is to predict what a critic might say to you, and say it to you first. Baking a cake? 'This is the worst thing you've ever made.' Even when it's good, he does a bad impression of your friend complaining about it. Hugo voices such classics as 'This is the most terrible song you've ever written' and 'No wonder your cousin Susan is more successful than you.'" },
+  { id: 'percy', name: 'Percy the Perfectionist',
+    desc: "Percy treats life like a Wes Anderson movie. If we control everything, we can make it to the grave without ever feeling another bad feeling. Dangerous, because it stops us having fun and experimenting. Percy claims perfection is the one true path. What Percy doesn't know: perfectionism isn't the way — it's in the way." },
+  { id: 'ramona', name: 'Ramona the Regretter',
+    desc: "Ramona is stuck in the past. That missed game-winning shot at fourteen? She obsesses over it as 'the moment it all went wrong,' ignoring that your teenage rebellion was inevitable and forgetting the many moments it went right. Worse, on some level she still believes you can go back and change things." },
+  { id: 'connie', name: 'Connie the Comparer',
+    desc: "Whenever your houseboat steers in a direction, Connie stares at every other houseboat and compares. Boats twice your age, twice your size, born into twice your income. She'll compare specific aspects — today she's comparing your windows with another well-windowed boat and totally ignoring your superior wood finish." },
+];
+
+const PUPPET_QUESTIONS = [
+  "When has this Sock Puppet actually shown up for me throughout my life?",
+  "When did I first hear from them?",
+  "How do I intend to live with them?",
+  "How are they feeling right now?",
+  "How can I show them love?"
+];
+
+const FREELOADER_QUESTIONS = [
+  "When did they get in your head (the moment)?",
+  "What did you make this moment mean (the subjective interpretation)?",
+  "What actually happened (the objective truth)?",
+  "Where has this feeling shown up in your life since (the pattern)?",
+  "What would your head look like if they left (the potential)?",
+  "Do you believe it's possible to live without them in your head (the possibility)?"
+];
+
+const BIAS_QUESTIONS = [
+  "What would be the truth if you were wrong?",
+  "What would it mean if you were wrong?",
+  "How have your cognitive biases shaped this opinion?",
+  "If you had zero cognitive biases, what might you believe instead?",
+  "Which do you believe is closer to the truth?",
+  "How can these varying beliefs serve you?"
+];
+
+const FIVE_YEAR_QUESTIONS = [
+  "Where did you want to be by this point?",
+  "Who did you want to be with?",
+  "What did you want to be doing for work?",
+  "What kind of person did you want to have become?",
+  "What did you want to have stopped doing?",
+  "What did you want to have started doing?",
+  "What were you afraid would still be true?",
+  "What did you secretly hope would be true?"
+];
+
+const WANT_PROMPTS = [
+  "What do I want, that I'd be embarrassed to admit out loud?",
+  "What would I do this year if I knew no one was watching?",
+  "What is one thing that, if it were true a year from now, would make this year a success?",
+  "What relationship do I want more of?",
+  "What do I want to feel more often?",
+  "What do I want to feel less often?",
+];
+
+/* =========================================================
+   TOP-LEVEL APP
+========================================================= */
+
+const SCREENS = {
+  HOME: 'home',
+  MEDITATE: 'meditate',
+  VOMIT: 'vomit',
+  FREELOADERS: 'freeloaders',
+  FIVEYEAR: 'fiveyear',
+  WANTS: 'wants',
+  BOSSES: 'bosses',
+  PUPPETS: 'puppets',
+  BIAS: 'bias',
+  BIOLOGY: 'biology',
+  COMPASSION: 'compassion',
+};
+
+function App() {
+  const [screen, setScreen] = useState(SCREENS.HOME);
+
+  const go = (s) => setScreen(s);
+  const home = () => setScreen(SCREENS.HOME);
+
+  return (
+    <div className="relative min-h-screen" style={{ zIndex: 1 }}>
+      {screen !== SCREENS.HOME && <TopBar onHome={home} />}
+      <main className="max-w-3xl mx-auto px-4 pb-24 pt-4 sm:pt-8 screen" key={screen}>
+        {screen === SCREENS.HOME && <Home go={go} />}
+        {screen === SCREENS.MEDITATE && <Meditate onDone={home} />}
+        {screen === SCREENS.VOMIT && <WordVomit onDone={home} />}
+        {screen === SCREENS.FREELOADERS && <Freeloaders onDone={home} />}
+        {screen === SCREENS.FIVEYEAR && <FiveYear onDone={home} />}
+        {screen === SCREENS.WANTS && <Wants onDone={home} />}
+        {screen === SCREENS.BOSSES && <Bosses onDone={home} />}
+        {screen === SCREENS.PUPPETS && <Puppets onDone={home} />}
+        {screen === SCREENS.BIAS && <Bias onDone={home} />}
+        {screen === SCREENS.BIOLOGY && <Biology onDone={home} />}
+        {screen === SCREENS.COMPASSION && <Compassion onDone={home} />}
+      </main>
+    </div>
+  );
+}
+
+function TopBar({ onHome }) {
+  return (
+    <div className="topbar sticky top-0 z-20">
+      <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+        <button className="btn-ghost btn" onClick={onHome}>
+          <span style={{fontSize: '1.1rem'}}>←</span>
+          <span className="hand text-lg">home</span>
+        </button>
+        <div className="hand text-xl" style={{ color: 'var(--ink-soft)' }}>houseboat</div>
+        <div style={{ width: 72 }} />
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   HOME
+========================================================= */
+
+function Home({ go }) {
+  const tiles = [
+    { key: SCREENS.MEDITATE,   n: '01', title: 'Go quiet',         sub: 'Ten minutes of breathing',           emoji: '🌬️' },
+    { key: SCREENS.VOMIT,      n: '02', title: 'Word vomit',       sub: 'Clear the clutter',                  emoji: '🌀' },
+    { key: SCREENS.FREELOADERS,n: '03', title: 'Freeloaders',      sub: 'Examine who lives in your head',     emoji: '👻' },
+    { key: SCREENS.FIVEYEAR,   n: '04', title: 'Five-year check-in', sub: 'Where did you want to be?',         emoji: '🕰️' },
+    { key: SCREENS.WANTS,      n: '05', title: 'What you want now', sub: 'Add to the running list',           emoji: '✨' },
+    { key: SCREENS.BOSSES,     n: '06', title: 'Five bosses',      sub: 'Selma, Luka, Freya, Aziz, Gilda',    emoji: '🎭' },
+    { key: SCREENS.PUPPETS,    n: '07', title: 'Sock puppets',     sub: 'Reframing insecurities',             emoji: '🧦' },
+    { key: SCREENS.BIAS,       n: '08', title: 'Bias check',       sub: 'Journal what you "know"',            emoji: '🔍' },
+    { key: SCREENS.BIOLOGY,    n: '09', title: 'A day at the zoo', sub: 'Humans do this … and I love that',   emoji: '🦁' },
+    { key: SCREENS.COMPASSION, n: '10', title: 'Be kind to kid you', sub: 'A photo, mean words, kinder words', emoji: '🧸' },
+  ];
+
+  return (
+    <div className="pt-2">
+      <header className="text-center mb-6 mt-6">
+        <div className="hand text-2xl" style={{ color: 'var(--coral)' }}>welcome aboard</div>
+        <h1 className="display text-5xl sm:text-6xl mt-1" style={{ fontWeight: 800 }}>
+          The <span style={{ fontStyle: 'italic' }}>Houseboat</span>
+        </h1>
+        <p className="body mt-3 text-base" style={{ color: 'var(--ink-soft)' }}>
+          A journal for clearing the clutter in your head.
+        </p>
+      </header>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        {tiles.map((t, i) => (
+          <button
+            key={t.key}
+            className="tile group"
+            style={{ transform: `rotate(${i % 2 === 0 ? -0.4 : 0.4}deg)` }}
+            onClick={() => go(t.key)}
+          >
+            <div className="tile-num">{t.n}</div>
+            <div className="text-3xl mb-1">{t.emoji}</div>
+            <div className="display text-2xl" style={{ fontWeight: 600 }}>{t.title}</div>
+            <div className="hand text-lg mt-1" style={{ color: 'var(--ink-soft)' }}>{t.sub}</div>
+          </button>
+        ))}
+      </div>
+      <footer className="mt-10 text-center hand text-lg" style={{ color: 'var(--ink-soft)' }}>
+        {SCRIPT_URL ? '☁️ synced to your sheet' : '📝 saving locally — set up config.js to sync'}
+      </footer>
+    </div>
+  );
+}
+
+/* =========================================================
+   01 MEDITATE
+========================================================= */
+
+function Meditate({ onDone }) {
+  const [phase, setPhase] = useState('setup'); // setup | running | done
+  const [duration, setDuration] = useState(10 * 60); // seconds
+  const [remaining, setRemaining] = useState(duration);
+  const [soundMode, setSoundMode] = useState('chime'); // chime | metronome | silent
+  const [breathPhase, setBreathPhase] = useState('in'); // in | hold | out | hold-out
+  const tickRef = useRef(null);
+  const audioCtxRef = useRef(null);
+  const tickAudioRef = useRef(null);
+
+  // Lazy-init audio context
+  const ensureAudio = () => {
+    if (!audioCtxRef.current) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      audioCtxRef.current = new AC();
+    }
+    return audioCtxRef.current;
+  };
+
+  const playBeep = (freq = 528, dur = 0.6, type = 'sine', vol = 0.18) => {
+    try {
+      const ctx = ensureAudio();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.value = 0;
+      osc.connect(gain).connect(ctx.destination);
+      const now = ctx.currentTime;
+      gain.gain.linearRampToValueAtTime(vol, now + 0.05);
+      gain.gain.linearRampToValueAtTime(0, now + dur);
+      osc.start(now);
+      osc.stop(now + dur + 0.05);
+    } catch (e) { /* ignore */ }
+  };
+
+  const playMetronomeTick = () => playBeep(880, 0.05, 'square', 0.08);
+  const playChime = () => {
+    playBeep(528, 1.4, 'sine', 0.2);
+    setTimeout(() => playBeep(660, 1.6, 'sine', 0.15), 200);
+    setTimeout(() => playBeep(792, 2.0, 'sine', 0.12), 400);
+  };
+
+  const start = () => {
+    setRemaining(duration);
+    setPhase('running');
+  };
+
+  // Breathing cycle: in 4s, hold 4s, out 4s, hold 4s
+  useEffect(() => {
+    if (phase !== 'running') return;
+    const cycle = ['in', 'hold', 'out', 'hold-out'];
+    let idx = 0;
+    setBreathPhase(cycle[0]);
+    if (soundMode === 'metronome') playMetronomeTick();
+    const breathTimer = setInterval(() => {
+      idx = (idx + 1) % cycle.length;
+      setBreathPhase(cycle[idx]);
+      if (soundMode === 'metronome') playMetronomeTick();
+    }, 4000);
+    return () => clearInterval(breathTimer);
+  }, [phase, soundMode]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (phase !== 'running') return;
+    tickRef.current = setInterval(() => {
+      setRemaining(r => {
+        if (r <= 1) {
+          clearInterval(tickRef.current);
+          setPhase('done');
+          if (soundMode !== 'silent') playChime();
+          return 0;
+        }
+        return r - 1;
+      });
+    }, 1000);
+    return () => clearInterval(tickRef.current);
+  }, [phase]);
+
+  const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
+  const ss = String(remaining % 60).padStart(2, '0');
+
+  const breathLabel = {
+    'in': 'Breathe in',
+    'hold': 'Hold',
+    'out': 'Breathe out',
+    'hold-out': 'Hold'
+  }[breathPhase];
+
+  const circleClass = {
+    'in': 'breathe-in',
+    'hold': 'breathe-hold',
+    'out': 'breathe-out',
+    'hold-out': 'breathe-hold-out'
+  }[breathPhase];
+
+  if (phase === 'setup') {
+    return (
+      <div>
+        <SectionHeader num="01" title="Go quiet" sub="A breath, a beat, a moment." />
+        <div className="dashed-card p-6 mt-4">
+          <label className="hand text-xl block mb-2">how long?</label>
+          <div className="flex gap-2 flex-wrap mb-5">
+            {[5, 10, 15, 20].map(m => (
+              <button key={m}
+                onClick={() => { setDuration(m*60); setRemaining(m*60); }}
+                className="btn"
+                style={duration === m*60 ? { background: 'var(--coral)', color: 'var(--cream)' } : {}}>
+                {m} min
+              </button>
+            ))}
+          </div>
+          <label className="hand text-xl block mb-2">sound</label>
+          <div className="flex gap-2 flex-wrap">
+            {[
+              {v:'chime', l:'calm alarm at the end'},
+              {v:'metronome', l:'metronome on each breath'},
+              {v:'silent', l:'silent'}
+            ].map(o => (
+              <button key={o.v}
+                onClick={() => setSoundMode(o.v)}
+                className="btn"
+                style={soundMode === o.v ? { background: 'var(--coral)', color: 'var(--cream)' } : {}}>
+                {o.l}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-6 text-center">
+          <button className="btn btn-primary text-lg" onClick={start}>Begin</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === 'running') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh]">
+        <div className="display text-5xl tracking-wider" style={{ color: 'var(--ink-soft)' }}>{mm}:{ss}</div>
+        <div className="relative mt-12 mb-12 flex items-center justify-center" style={{ width: 240, height: 240 }}>
+          <div
+            className={circleClass}
+            style={{
+              position: 'absolute',
+              width: 220, height: 220, borderRadius: '50%',
+              background: 'radial-gradient(circle at 35% 35%, #f7d4a8, var(--coral) 75%)',
+              boxShadow: '0 10px 40px rgba(217,105,65,0.25), inset 0 -10px 30px rgba(0,0,0,0.08)',
+              transformOrigin: 'center',
+              transition: 'transform 0s'
+            }}
+          />
+          <div className="display text-2xl relative" style={{ color: 'var(--cream)' }}>{breathLabel}</div>
+        </div>
+        <button className="btn" onClick={() => setPhase('done')}>End early</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-center py-16">
+      <div className="hand text-3xl" style={{ color: 'var(--coral)' }}>and exhale.</div>
+      <div className="display text-5xl mt-4" style={{ fontWeight: 600 }}>You're back.</div>
+      <p className="body mt-4" style={{ color: 'var(--ink-soft)' }}>
+        Take what you found here with you.
+      </p>
+      <button className="btn btn-primary mt-8" onClick={onDone}>Back to main</button>
+    </div>
+  );
+}
+
+/* =========================================================
+   02 WORD VOMIT
+========================================================= */
+
+function WordVomit({ onDone }) {
+  const { entries, update } = useSection('vomit');
+  const [thoughts, setThoughts] = useState(['']);
+  const inputRefs = useRef([]);
+
+  const addThought = () => {
+    setThoughts(t => [...t, '']);
+    setTimeout(() => {
+      const el = inputRefs.current[thoughts.length];
+      if (el) el.focus();
+    }, 30);
+  };
+
+  const updateAt = (i, v) => {
+    setThoughts(t => t.map((x, idx) => idx === i ? v : x));
+  };
+
+  const finish = async () => {
+    const cleaned = thoughts.map(t => t.trim()).filter(Boolean);
+    if (cleaned.length === 0) { onDone(); return; }
+    const session = { id: uid(), date: nowISO(), thoughts: cleaned };
+    await update([session, ...entries]);
+    onDone();
+  };
+
+  return (
+    <div>
+      <SectionHeader num="02" title="Word vomit" sub="Short, fast. One thought at a time." />
+      <p className="body mt-3" style={{ color: 'var(--ink-soft)' }}>
+        Don't edit. Don't reread. Press <em>new thought</em> the moment your sentence wants to end.
+      </p>
+
+      <div className="mt-5 space-y-3">
+        {thoughts.map((t, i) => (
+          <div key={i} className="flex gap-2 items-start">
+            <span className="hand text-2xl pt-2" style={{ color: 'var(--coral)' }}>~</span>
+            <textarea
+              ref={el => inputRefs.current[i] = el}
+              value={t}
+              onChange={e => updateAt(i, e.target.value)}
+              rows={2}
+              autoFocus={i === thoughts.length - 1}
+              placeholder={i === 0 ? "and then I thought…" : ""}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button className="btn btn-primary" onClick={addThought}>+ new thought</button>
+        <button className="btn" onClick={finish}>no new thoughts — done</button>
+      </div>
+
+      {entries.length > 0 && (
+        <details className="mt-10">
+          <summary className="hand text-xl cursor-pointer" style={{ color: 'var(--ink-soft)' }}>
+            past sessions ({entries.length})
+          </summary>
+          <div className="mt-3 space-y-3">
+            {entries.map(e => (
+              <div key={e.id} className="entry-card">
+                <div className="hand text-lg" style={{ color: 'var(--ink-soft)' }}>{fmtDate(e.date)}</div>
+                <ul className="mt-2 space-y-1">
+                  {e.thoughts.map((t, i) => <li key={i} className="body" style={{ lineHeight: 1.5 }}>~ {t}</li>)}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   03 FREELOADERS
+========================================================= */
+
+function Freeloaders({ onDone }) {
+  const { entries, update, loading } = useSection('freeloaders');
+  const [editing, setEditing] = useState(null); // entry or null
+  const [creating, setCreating] = useState(false);
+
+  const saveEntry = async (entry) => {
+    const exists = entries.find(e => e.id === entry.id);
+    const next = exists
+      ? entries.map(e => e.id === entry.id ? entry : e)
+      : [entry, ...entries];
+    await update(next);
+    setEditing(null);
+    setCreating(false);
+  };
+
+  const removeEntry = async (id) => {
+    if (!confirm('Delete this freeloader?')) return;
+    await update(entries.filter(e => e.id !== id));
+    setEditing(null);
+  };
+
+  if (editing || creating) {
+    return (
+      <FreeloaderForm
+        initial={editing || { id: uid(), date: nowISO(), name: '', photo: null, description: '', saying: '', answers: Array(6).fill('') }}
+        onSave={saveEntry}
+        onCancel={() => { setEditing(null); setCreating(false); }}
+        onDelete={editing ? () => removeEntry(editing.id) : null}
+      />
+    );
+  }
+
+  return (
+    <div>
+      <SectionHeader num="03" title="Freeloaders" sub="The voices renting space, rent-free." />
+      <p className="body mt-3" style={{ color: 'var(--ink-soft)' }}>
+        Name each one. Picture them. Then ask them six questions.
+      </p>
+
+      <div className="mt-5 space-y-3">
+        {loading && <Loading />}
+        {!loading && entries.length === 0 && (
+          <div className="dashed-card p-6 text-center">
+            <div className="hand text-xl" style={{ color: 'var(--ink-soft)' }}>no freeloaders named yet</div>
+          </div>
+        )}
+        {entries.map(e => (
+          <button key={e.id} onClick={() => setEditing(e)} className="entry-card w-full text-left flex gap-3 items-center">
+            {e.photo ? (
+              <img src={e.photo} alt="" className="w-14 h-14 rounded-full object-cover border-2" style={{ borderColor: 'var(--ink)' }} />
+            ) : (
+              <div className="w-14 h-14 rounded-full flex items-center justify-center text-2xl" style={{ background: 'var(--paper-dark)', border: '2px solid var(--ink)' }}>
+                👤
+              </div>
+            )}
+            <div className="flex-1">
+              <div className="display text-xl" style={{ fontWeight: 600 }}>{e.name || 'Unnamed'}</div>
+              <div className="hand text-base" style={{ color: 'var(--ink-soft)' }}>{fmtDate(e.date)}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button className="btn btn-primary" onClick={() => setCreating(true)}>+ add a freeloader</button>
+        <button className="btn" onClick={onDone}>back to main</button>
+      </div>
+    </div>
+  );
+}
+
+function FreeloaderForm({ initial, onSave, onCancel, onDelete }) {
+  const [entry, setEntry] = useState(initial);
+  const fileRef = useRef(null);
+
+  const set = (k, v) => setEntry(e => ({ ...e, [k]: v }));
+  const setAnswer = (i, v) => setEntry(e => {
+    const next = [...e.answers]; next[i] = v;
+    return { ...e, answers: next };
+  });
+
+  const onFile = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      // resize to keep base64 small
+      const img = new Image();
+      img.onload = () => {
+        const max = 400;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = img.width * scale, h = img.height * scale;
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        set('photo', canvas.toDataURL('image/jpeg', 0.78));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div>
+      <SectionHeader num="03" title={entry.name || 'New freeloader'} sub="Name them. Picture them. Then ask." />
+
+      <div className="dashed-card p-5 mt-4 space-y-4">
+        <div>
+          <label className="hand text-xl block mb-1">name</label>
+          <input type="text" value={entry.name} onChange={e => set('name', e.target.value)} placeholder="e.g. The Director" />
+        </div>
+
+        <div>
+          <label className="hand text-xl block mb-1">photo or sketch</label>
+          <div className="flex items-center gap-3">
+            {entry.photo ? (
+              <img src={entry.photo} alt="" className="w-20 h-20 rounded-xl object-cover border-2" style={{ borderColor: 'var(--ink)' }} />
+            ) : (
+              <div className="w-20 h-20 rounded-xl flex items-center justify-center text-3xl" style={{ background: 'var(--paper-dark)', border: '2px dashed var(--ink-soft)' }}>
+                +
+              </div>
+            )}
+            <div className="flex flex-col gap-2">
+              <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={e => onFile(e.target.files[0])} />
+              <button className="btn" onClick={() => fileRef.current?.click()}>{entry.photo ? 'change' : 'upload'}</button>
+              {entry.photo && <button className="btn btn-ghost" onClick={() => set('photo', null)}>remove</button>}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="hand text-xl block mb-1">who are they?</label>
+          <textarea rows={3} value={entry.description} onChange={e => set('description', e.target.value)} placeholder="A description…" />
+        </div>
+
+        <div>
+          <label className="hand text-xl block mb-1">what are they saying to you?</label>
+          <textarea rows={3} value={entry.saying} onChange={e => set('saying', e.target.value)} placeholder="In their own voice…" />
+        </div>
+      </div>
+
+      <h3 className="display text-2xl mt-8 mb-3" style={{ fontWeight: 600 }}>The six questions</h3>
+      <div className="space-y-4">
+        {FREELOADER_QUESTIONS.map((q, i) => (
+          <div key={i} className="entry-card">
+            <div className="hand text-lg mb-1" style={{ color: 'var(--coral)' }}>question {i+1}</div>
+            <div className="body mb-2" style={{ fontWeight: 700 }}>{q}</div>
+            <textarea rows={2} value={entry.answers[i] || ''} onChange={e => setAnswer(i, e.target.value)} />
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button className="btn btn-primary" onClick={() => onSave({ ...entry, updated: nowISO() })}>save</button>
+        <button className="btn" onClick={onCancel}>cancel</button>
+        {onDelete && <button className="btn btn-ghost" style={{ color: 'var(--coral-dark)' }} onClick={onDelete}>delete</button>}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   04 FIVE-YEAR CHECK-IN
+========================================================= */
+
+function FiveYear({ onDone }) {
+  const { entries, update, loading } = useSection('fiveyear');
+  const [mode, setMode] = useState('list'); // list | new
+  const [editing, setEditing] = useState(null);
+
+  const startNew = () => { setEditing(null); setMode('new'); };
+  const openExisting = (e) => { setEditing(e); setMode('new'); };
+
+  const saveEntry = async (entry) => {
+    const exists = entries.find(e => e.id === entry.id);
+    const next = exists ? entries.map(e => e.id === entry.id ? entry : e) : [entry, ...entries];
+    await update(next);
+    setMode('list');
+    setEditing(null);
+  };
+
+  if (mode === 'new') {
+    return (
+      <FiveYearForm
+        initial={editing || { id: uid(), date: nowISO(), mode: 'years-ago', yearsAgo: 5, targetYear: new Date().getFullYear()-5, ageAtTime: null, answers: Array(FIVE_YEAR_QUESTIONS.length).fill('') }}
+        onSave={saveEntry}
+        onCancel={() => { setMode('list'); setEditing(null); }}
+      />
+    );
+  }
+
+  return (
+    <div>
+      <SectionHeader num="04" title="Five-year check-in" sub="Where did you want to be?" />
+      <p className="body mt-3" style={{ color: 'var(--ink-soft)' }}>
+        Pick a moment in your past. Answer what your past-self hoped for. Then notice what came true and what didn't.
+      </p>
+
+      <div className="mt-5 space-y-3">
+        {loading && <Loading />}
+        {!loading && entries.length === 0 && (
+          <div className="dashed-card p-6 text-center">
+            <div className="hand text-xl" style={{ color: 'var(--ink-soft)' }}>no check-ins yet</div>
+          </div>
+        )}
+        {entries.map(e => (
+          <button key={e.id} onClick={() => openExisting(e)} className="entry-card w-full text-left">
+            <div className="display text-xl" style={{ fontWeight: 600 }}>
+              {e.mode === 'years-ago' ? `${e.yearsAgo} years ago` : `Year ${e.targetYear}`}
+              {e.ageAtTime ? <span className="hand text-base ml-2" style={{ color: 'var(--ink-soft)' }}>(age {e.ageAtTime})</span> : null}
+            </div>
+            <div className="hand text-base mt-1" style={{ color: 'var(--ink-soft)' }}>{fmtDate(e.date)}</div>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button className="btn btn-primary" onClick={startNew}>+ new check-in</button>
+        <button className="btn" onClick={onDone}>back to main</button>
+      </div>
+    </div>
+  );
+}
+
+function FiveYearForm({ initial, onSave, onCancel }) {
+  const [entry, setEntry] = useState(initial);
+  const set = (k, v) => setEntry(e => ({ ...e, [k]: v }));
+  const setAnswer = (i, v) => setEntry(e => {
+    const a = [...e.answers]; a[i] = v;
+    return { ...e, answers: a };
+  });
+  const currentYear = new Date().getFullYear();
+  const targetYear = entry.mode === 'years-ago' ? currentYear - (entry.yearsAgo || 0) : (entry.targetYear || currentYear);
+
+  return (
+    <div>
+      <SectionHeader num="04" title="A moment in time" sub="Choose when, then answer." />
+
+      <div className="dashed-card p-5 mt-4">
+        <div className="flex gap-2 flex-wrap mb-4">
+          <button className="btn" style={entry.mode === 'years-ago' ? { background: 'var(--coral)', color: 'var(--cream)' } : {}} onClick={() => set('mode', 'years-ago')}>years ago</button>
+          <button className="btn" style={entry.mode === 'specific-year' ? { background: 'var(--coral)', color: 'var(--cream)' } : {}} onClick={() => set('mode', 'specific-year')}>a specific year</button>
+          <button className="btn" style={entry.mode === 'age' ? { background: 'var(--coral)', color: 'var(--cream)' } : {}} onClick={() => set('mode', 'age')}>at an age</button>
+        </div>
+
+        {entry.mode === 'years-ago' && (
+          <div>
+            <label className="hand text-xl block mb-1">how many years ago?</label>
+            <input type="number" min="1" max="80" value={entry.yearsAgo || ''} onChange={e => set('yearsAgo', parseInt(e.target.value, 10) || 0)} />
+            <div className="hand text-base mt-2" style={{ color: 'var(--ink-soft)' }}>that was {currentYear - (entry.yearsAgo || 0)}</div>
+          </div>
+        )}
+        {entry.mode === 'specific-year' && (
+          <div>
+            <label className="hand text-xl block mb-1">which year?</label>
+            <input type="number" min="1900" max={currentYear} value={entry.targetYear || ''} onChange={e => set('targetYear', parseInt(e.target.value, 10) || currentYear)} />
+          </div>
+        )}
+        {entry.mode === 'age' && (
+          <div>
+            <label className="hand text-xl block mb-1">how old were you?</label>
+            <input type="number" min="1" max="120" value={entry.ageAtTime || ''} onChange={e => set('ageAtTime', parseInt(e.target.value, 10) || 0)} />
+            <label className="hand text-xl block mt-3 mb-1">how old are you now?</label>
+            <input type="number" min="1" max="120" value={entry.currentAge || ''} onChange={e => set('currentAge', parseInt(e.target.value, 10) || 0)} />
+            {entry.ageAtTime && entry.currentAge && (
+              <div className="hand text-base mt-2" style={{ color: 'var(--ink-soft)' }}>
+                that was roughly {currentYear - (entry.currentAge - entry.ageAtTime)}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <h3 className="display text-2xl mt-8 mb-3" style={{ fontWeight: 600 }}>
+        Back then, in {targetYear}{entry.ageAtTime ? ` (age ${entry.ageAtTime})` : ''}…
+      </h3>
+
+      <div className="space-y-4">
+        {FIVE_YEAR_QUESTIONS.map((q, i) => (
+          <div key={i} className="entry-card">
+            <div className="body mb-2" style={{ fontWeight: 700 }}>{q}</div>
+            <textarea rows={2} value={entry.answers[i] || ''} onChange={e => setAnswer(i, e.target.value)} />
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button className="btn btn-primary" onClick={() => onSave({ ...entry, updated: nowISO() })}>save</button>
+        <button className="btn" onClick={onCancel}>cancel</button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   05 WANTS
+========================================================= */
+
+function Wants({ onDone }) {
+  const { entries, update, loading } = useSection('wants');
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState({ prompt: '', text: '' });
+
+  const save = async () => {
+    const text = draft.text.trim();
+    if (!text) { setAdding(false); return; }
+    await update([{ id: uid(), date: nowISO(), prompt: draft.prompt, text }, ...entries]);
+    setDraft({ prompt: '', text: '' });
+    setAdding(false);
+  };
+
+  const remove = async (id) => {
+    if (!confirm('Delete this entry?')) return;
+    await update(entries.filter(e => e.id !== id));
+  };
+
+  return (
+    <div>
+      <SectionHeader num="05" title="What you want, now" sub="A running list. Add to it whenever." />
+
+      <div className="mt-5 space-y-3">
+        {loading && <Loading />}
+        {!loading && entries.length === 0 && !adding && (
+          <div className="dashed-card p-6 text-center">
+            <div className="hand text-xl" style={{ color: 'var(--ink-soft)' }}>what do you want?</div>
+          </div>
+        )}
+        {entries.map(e => (
+          <div key={e.id} className="entry-card">
+            {e.prompt && <div className="hand text-base mb-1" style={{ color: 'var(--coral)' }}>{e.prompt}</div>}
+            <div className="body" style={{ lineHeight: 1.55 }}>{e.text}</div>
+            <div className="flex items-center justify-between mt-2">
+              <div className="hand text-sm" style={{ color: 'var(--ink-soft)' }}>{fmtDate(e.date)}</div>
+              <button className="btn btn-ghost text-sm" style={{ color: 'var(--coral-dark)' }} onClick={() => remove(e.id)}>delete</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {adding && (
+        <div className="dashed-card p-5 mt-5">
+          <label className="hand text-xl block mb-1">a prompt (optional)</label>
+          <select value={draft.prompt} onChange={e => setDraft(d => ({ ...d, prompt: e.target.value }))}>
+            <option value="">no prompt — free write</option>
+            {WANT_PROMPTS.map((p, i) => <option key={i} value={p}>{p}</option>)}
+          </select>
+          <label className="hand text-xl block mt-4 mb-1">your answer</label>
+          <textarea rows={4} value={draft.text} onChange={e => setDraft(d => ({ ...d, text: e.target.value }))} autoFocus />
+          <div className="mt-3 flex gap-2 flex-wrap">
+            <button className="btn btn-primary" onClick={save}>save</button>
+            <button className="btn" onClick={() => { setAdding(false); setDraft({ prompt: '', text: '' }); }}>cancel</button>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        {!adding && <button className="btn btn-primary" onClick={() => setAdding(true)}>+ add</button>}
+        <button className="btn" onClick={onDone}>back to main</button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   06 BOSSES
+========================================================= */
+
+function Bosses({ onDone }) {
+  const { entries, update, loading } = useSection('bosses');
+  const [selectedBoss, setSelectedBoss] = useState(null);
+  // entries shape: [{ id, date, bossId, answers: string[6] }]
+
+  if (selectedBoss) {
+    return (
+      <BossDetail
+        boss={BOSSES.find(b => b.id === selectedBoss)}
+        history={entries.filter(e => e.bossId === selectedBoss)}
+        onSave={async (entry) => {
+          await update([entry, ...entries]);
+        }}
+        onBack={() => setSelectedBoss(null)}
+      />
+    );
+  }
+
+  return (
+    <div>
+      <SectionHeader num="06" title="The five bosses" sub="Five voices on your houseboat." />
+      <p className="body mt-3" style={{ color: 'var(--ink-soft)' }}>
+        Each one wants a different life for you. Pick one to hear them out.
+      </p>
+
+      <div className="mt-5 space-y-3">
+        {BOSSES.map(b => {
+          const count = entries.filter(e => e.bossId === b.id).length;
+          return (
+            <button key={b.id} onClick={() => setSelectedBoss(b.id)} className="character-card w-full text-left flex gap-3 items-start">
+              <div className="text-3xl shrink-0">{b.emoji}</div>
+              <div className="flex-1">
+                <div className="display text-xl" style={{ fontWeight: 600, color: b.color }}>{b.name}</div>
+                <div className="hand text-base mt-1" style={{ color: 'var(--ink-soft)' }}>
+                  {count === 0 ? 'not yet heard' : `${count} ${count === 1 ? 'entry' : 'entries'}`}
+                </div>
+              </div>
+              <div className="hand text-2xl" style={{ color: 'var(--ink-soft)' }}>→</div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-6">
+        <button className="btn" onClick={onDone}>back to main</button>
+      </div>
+    </div>
+  );
+}
+
+function BossDetail({ boss, history, onSave, onBack }) {
+  const [answers, setAnswers] = useState(Array(BOSS_QUESTIONS.length).fill(''));
+  const [view, setView] = useState('answer'); // answer | past
+
+  const setAnswer = (i, v) => setAnswers(a => a.map((x, idx) => idx === i ? v : x));
+
+  const save = async () => {
+    const filled = answers.some(a => a.trim());
+    if (!filled) { onBack(); return; }
+    await onSave({ id: uid(), date: nowISO(), bossId: boss.id, answers });
+    setAnswers(Array(BOSS_QUESTIONS.length).fill(''));
+    onBack();
+  };
+
+  return (
+    <div>
+      <button className="btn btn-ghost mb-3" onClick={onBack}>← back to bosses</button>
+      <div className="dashed-card p-5">
+        <div className="flex items-center gap-3">
+          <div className="text-4xl">{boss.emoji}</div>
+          <div className="display text-3xl" style={{ fontWeight: 600, color: boss.color }}>{boss.name}</div>
+        </div>
+        <p className="body mt-3" style={{ lineHeight: 1.55 }}>{boss.desc}</p>
+      </div>
+
+      <div className="mt-5 flex gap-2">
+        <button className="btn" style={view === 'answer' ? { background: 'var(--coral)', color: 'var(--cream)' } : {}} onClick={() => setView('answer')}>
+          new answer
+        </button>
+        <button className="btn" style={view === 'past' ? { background: 'var(--coral)', color: 'var(--cream)' } : {}} onClick={() => setView('past')}>
+          past ({history.length})
+        </button>
+      </div>
+
+      {view === 'answer' && (
+        <>
+          <div className="mt-5 space-y-4">
+            {BOSS_QUESTIONS.map((q, i) => (
+              <div key={i} className="entry-card">
+                <div className="body mb-2" style={{ fontWeight: 700 }}>{q}</div>
+                <textarea rows={2} value={answers[i]} onChange={e => setAnswer(i, e.target.value)} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button className="btn btn-primary" onClick={save}>save</button>
+            <button className="btn" onClick={onBack}>cancel</button>
+          </div>
+        </>
+      )}
+
+      {view === 'past' && (
+        <div className="mt-5 space-y-3">
+          {history.length === 0 && <div className="hand text-xl" style={{ color: 'var(--ink-soft)' }}>nothing here yet</div>}
+          {history.map(h => (
+            <div key={h.id} className="entry-card">
+              <div className="hand text-base mb-2" style={{ color: 'var(--ink-soft)' }}>{fmtDate(h.date)}</div>
+              {h.answers.map((a, i) => a && (
+                <div key={i} className="mb-2">
+                  <div className="body text-sm" style={{ fontWeight: 700, color: 'var(--ink-soft)' }}>{BOSS_QUESTIONS[i]}</div>
+                  <div className="body" style={{ lineHeight: 1.5 }}>{a}</div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   07 SOCK PUPPETS
+========================================================= */
+
+function Puppets({ onDone }) {
+  const { entries, update, loading } = useSection('puppets');
+  // shape: [{ id, date, selfTalk, puppets: { [puppetId]: { said: string, reframe: string, answers: string[5] } } }]
+  const [editing, setEditing] = useState(null);
+  const [creating, setCreating] = useState(false);
+
+  const saveEntry = async (entry) => {
+    const exists = entries.find(e => e.id === entry.id);
+    const next = exists ? entries.map(e => e.id === entry.id ? entry : e) : [entry, ...entries];
+    await update(next);
+    setEditing(null);
+    setCreating(false);
+  };
+
+  if (editing || creating) {
+    return (
+      <PuppetForm
+        initial={editing || { id: uid(), date: nowISO(), selfTalk: '', puppets: {} }}
+        onSave={saveEntry}
+        onCancel={() => { setEditing(null); setCreating(false); }}
+      />
+    );
+  }
+
+  return (
+    <div>
+      <SectionHeader num="07" title="Sock puppets" sub="Reframing insecurities." />
+      <p className="body mt-3" style={{ color: 'var(--ink-soft)' }}>
+        Start with the mean thing you said to yourself. Then hand each puppet the microphone.
+      </p>
+
+      <div className="mt-5 space-y-3">
+        {loading && <Loading />}
+        {!loading && entries.length === 0 && (
+          <div className="dashed-card p-6 text-center">
+            <div className="hand text-xl" style={{ color: 'var(--ink-soft)' }}>no puppet sessions yet</div>
+          </div>
+        )}
+        {entries.map(e => (
+          <button key={e.id} onClick={() => setEditing(e)} className="entry-card w-full text-left">
+            <div className="hand text-base mb-1" style={{ color: 'var(--ink-soft)' }}>{fmtDate(e.date)}</div>
+            <div className="body" style={{ fontStyle: 'italic' }}>{e.selfTalk || '(no self-talk recorded)'}</div>
+            <div className="hand text-base mt-2" style={{ color: 'var(--coral)' }}>
+              {Object.keys(e.puppets || {}).length} {Object.keys(e.puppets || {}).length === 1 ? 'puppet' : 'puppets'} heard
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button className="btn btn-primary" onClick={() => setCreating(true)}>+ new session</button>
+        <button className="btn" onClick={onDone}>back to main</button>
+      </div>
+    </div>
+  );
+}
+
+function PuppetForm({ initial, onSave, onCancel }) {
+  const [entry, setEntry] = useState(initial);
+  const [openPuppet, setOpenPuppet] = useState(null);
+
+  const set = (k, v) => setEntry(e => ({ ...e, [k]: v }));
+
+  const updatePuppet = (pid, patch) => setEntry(e => ({
+    ...e,
+    puppets: {
+      ...e.puppets,
+      [pid]: { said: '', reframe: '', answers: Array(PUPPET_QUESTIONS.length).fill(''), ...e.puppets[pid], ...patch }
+    }
+  }));
+
+  return (
+    <div>
+      <SectionHeader num="07" title="A puppet session" sub="What did you say? Who said it back?" />
+
+      <div className="dashed-card p-5 mt-4">
+        <label className="hand text-xl block mb-1">the mean thing you said to yourself</label>
+        <textarea rows={3} value={entry.selfTalk} onChange={e => set('selfTalk', e.target.value)} placeholder="write it out, a sentence or two…" />
+      </div>
+
+      <h3 className="display text-2xl mt-8 mb-3" style={{ fontWeight: 600 }}>Hand them the microphone</h3>
+      <p className="body" style={{ color: 'var(--ink-soft)' }}>Tap a puppet to hear what they have to say.</p>
+
+      <div className="mt-4 space-y-3">
+        {PUPPETS.map(p => {
+          const data = entry.puppets[p.id];
+          const filled = data && (data.said || data.reframe || (data.answers || []).some(a => a));
+          const isOpen = openPuppet === p.id;
+          return (
+            <div key={p.id} className="character-card" style={{ padding: 0 }}>
+              <button className="w-full text-left p-4 flex items-center justify-between" onClick={() => setOpenPuppet(isOpen ? null : p.id)}>
+                <div>
+                  <div className="display text-xl" style={{ fontWeight: 600 }}>{p.name}</div>
+                  {filled && <div className="hand text-base" style={{ color: 'var(--coral)' }}>✓ heard</div>}
+                </div>
+                <span className="hand text-2xl">{isOpen ? '−' : '+'}</span>
+              </button>
+              {isOpen && (
+                <div className="px-4 pb-4 space-y-3 border-t-2" style={{ borderColor: 'var(--paper-dark)' }}>
+                  <p className="body mt-3" style={{ fontStyle: 'italic', color: 'var(--ink-soft)', lineHeight: 1.55 }}>{p.desc}</p>
+
+                  <div>
+                    <label className="hand text-lg block mb-1">if you gave {p.name.split(' ')[0]} a microphone, what would they say?</label>
+                    <textarea rows={2} value={data?.said || ''} onChange={e => updatePuppet(p.id, { said: e.target.value })} />
+                  </div>
+
+                  <div>
+                    <label className="hand text-lg block mb-1">reframed as a coping mechanism keeping you safe — what are they really trying to say?</label>
+                    <textarea rows={2} value={data?.reframe || ''} onChange={e => updatePuppet(p.id, { reframe: e.target.value })} />
+                  </div>
+
+                  <div>
+                    <div className="hand text-lg mt-2 mb-2" style={{ color: 'var(--coral)' }}>sit with them. answer with compassion.</div>
+                    {PUPPET_QUESTIONS.map((q, i) => (
+                      <div key={i} className="mb-3">
+                        <div className="body mb-1" style={{ fontWeight: 700, fontSize: '0.95rem' }}>{q}</div>
+                        <textarea rows={2} value={(data?.answers || [])[i] || ''} onChange={e => {
+                          const arr = [...(data?.answers || Array(PUPPET_QUESTIONS.length).fill(''))];
+                          arr[i] = e.target.value;
+                          updatePuppet(p.id, { answers: arr });
+                        }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button className="btn btn-primary" onClick={() => onSave({ ...entry, updated: nowISO() })}>save</button>
+        <button className="btn" onClick={onCancel}>cancel</button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   08 BIAS
+========================================================= */
+
+function Bias({ onDone }) {
+  const { entries, update, loading } = useSection('bias');
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState({ belief: '', answers: Array(BIAS_QUESTIONS.length).fill('') });
+
+  const save = async () => {
+    if (!draft.belief.trim() && !draft.answers.some(a => a.trim())) { setAdding(false); return; }
+    await update([{ id: uid(), date: nowISO(), ...draft }, ...entries]);
+    setDraft({ belief: '', answers: Array(BIAS_QUESTIONS.length).fill('') });
+    setAdding(false);
+  };
+
+  return (
+    <div>
+      <SectionHeader num="08" title="Bias check" sub="Take a belief out into the light." />
+      <p className="body mt-3" style={{ color: 'var(--ink-soft)' }}>
+        Pick something subjective you believe. Big or small. Then see what shifts.
+      </p>
+
+      <div className="mt-5 space-y-3">
+        {loading && <Loading />}
+        {entries.map(e => (
+          <details key={e.id} className="entry-card">
+            <summary className="cursor-pointer">
+              <span className="hand text-base mr-2" style={{ color: 'var(--ink-soft)' }}>{fmtDate(e.date)}</span>
+              <span className="body" style={{ fontWeight: 700 }}>{e.belief || '(unstated belief)'}</span>
+            </summary>
+            <div className="mt-3 space-y-2">
+              {e.answers.map((a, i) => a && (
+                <div key={i}>
+                  <div className="body text-sm" style={{ fontWeight: 700, color: 'var(--ink-soft)' }}>{BIAS_QUESTIONS[i]}</div>
+                  <div className="body" style={{ lineHeight: 1.5 }}>{a}</div>
+                </div>
+              ))}
+            </div>
+          </details>
+        ))}
+      </div>
+
+      {adding && (
+        <div className="dashed-card p-5 mt-5">
+          <label className="hand text-xl block mb-1">a belief — subjective, unproved, anything</label>
+          <textarea rows={2} value={draft.belief} onChange={e => setDraft(d => ({ ...d, belief: e.target.value }))} placeholder="e.g. people who don't reply quickly don't like me" />
+
+          <div className="mt-4 space-y-3">
+            {BIAS_QUESTIONS.map((q, i) => (
+              <div key={i}>
+                <div className="body mb-1" style={{ fontWeight: 700 }}>{q}</div>
+                <textarea rows={2} value={draft.answers[i]} onChange={e => setDraft(d => {
+                  const a = [...d.answers]; a[i] = e.target.value;
+                  return { ...d, answers: a };
+                })} />
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button className="btn btn-primary" onClick={save}>save</button>
+            <button className="btn" onClick={() => { setAdding(false); setDraft({ belief: '', answers: Array(BIAS_QUESTIONS.length).fill('') }); }}>cancel</button>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        {!adding && <button className="btn btn-primary" onClick={() => setAdding(true)}>+ add</button>}
+        <button className="btn" onClick={onDone}>back to main</button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   09 BIOLOGY (a day at the zoo)
+========================================================= */
+
+function Biology({ onDone }) {
+  const { entries, update, loading } = useSection('biology');
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState({ moment: '', reframe: '' });
+
+  const buildReframe = () => {
+    const m = draft.moment.trim();
+    if (!m) return;
+    // light auto-rewrite: first-person -> humans get
+    const rough = m
+      .replace(/^I\s/i, 'Humans ')
+      .replace(/\bI\b/g, 'humans')
+      .replace(/\bmy\b/gi, 'their')
+      .replace(/\bme\b/gi, 'them');
+    const suffix = '… and I love that.';
+    const punct = /[.!?]\s*$/.test(rough) ? '' : '';
+    setDraft(d => ({ ...d, reframe: `${rough}${punct} ${suffix}`.trim() }));
+  };
+
+  const save = async () => {
+    if (!draft.moment.trim()) { setAdding(false); return; }
+    await update([{ id: uid(), date: nowISO(), ...draft }, ...entries]);
+    setDraft({ moment: '', reframe: '' });
+    setAdding(false);
+  };
+
+  return (
+    <div>
+      <SectionHeader num="09" title="A day at the zoo" sub="Watch the human animal at work." />
+      <p className="body mt-3" style={{ color: 'var(--ink-soft)' }}>
+        Pick a moment you felt the animal take over. Then reframe it as something all humans do.
+      </p>
+
+      <div className="mt-5 space-y-3">
+        {loading && <Loading />}
+        {entries.map(e => (
+          <div key={e.id} className="entry-card">
+            <div className="hand text-base mb-1" style={{ color: 'var(--ink-soft)' }}>{fmtDate(e.date)}</div>
+            <div className="body mb-2" style={{ fontStyle: 'italic' }}>{e.moment}</div>
+            <div className="body" style={{ color: 'var(--coral-dark)', fontWeight: 700 }}>{e.reframe}</div>
+          </div>
+        ))}
+      </div>
+
+      {adding && (
+        <div className="dashed-card p-5 mt-5">
+          <label className="hand text-xl block mb-1">the moment</label>
+          <textarea rows={3} value={draft.moment} onChange={e => setDraft(d => ({ ...d, moment: e.target.value }))} placeholder="raw emotions. a sentence or two." />
+
+          <div className="mt-3 flex gap-2 flex-wrap">
+            <button className="btn" onClick={buildReframe} disabled={!draft.moment.trim()}>auto-reframe →</button>
+          </div>
+
+          <label className="hand text-xl block mt-4 mb-1">reframed — as a human quirk</label>
+          <textarea rows={3} value={draft.reframe} onChange={e => setDraft(d => ({ ...d, reframe: e.target.value }))} placeholder="Humans … and I love that." />
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button className="btn btn-primary" onClick={save}>save</button>
+            <button className="btn" onClick={() => { setAdding(false); setDraft({ moment: '', reframe: '' }); }}>cancel</button>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        {!adding && <button className="btn btn-primary" onClick={() => setAdding(true)}>+ add</button>}
+        <button className="btn" onClick={onDone}>back to main</button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   10 COMPASSION
+========================================================= */
+
+function Compassion({ onDone }) {
+  const { entries, update, loading } = useSection('compassion');
+  // entry: { id, date, photo, mean, kind }
+  const [draft, setDraft] = useState({ id: uid(), photo: null, mean: '', kind: '' });
+  const [step, setStep] = useState(1); // 1 photo, 2 mean, 3 read, 4 kind, 5 read kind
+  const [savedPhoto, setSavedPhoto] = useState(null);
+  const fileRef = useRef(null);
+
+  // Load persistent kid-you photo from latest entry if any
+  useEffect(() => {
+    if (entries.length && entries[0].photo && !draft.photo) {
+      setDraft(d => ({ ...d, photo: entries[0].photo }));
+      setSavedPhoto(entries[0].photo);
+    }
+  }, [entries]);
+
+  const onFile = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 500;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = img.width * scale, h = img.height * scale;
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const data = canvas.toDataURL('image/jpeg', 0.78);
+        setDraft(d => ({ ...d, photo: data }));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const save = async () => {
+    if (!draft.mean.trim() && !draft.kind.trim()) { onDone(); return; }
+    await update([{ ...draft, date: nowISO() }, ...entries]);
+    onDone();
+  };
+
+  return (
+    <div>
+      <SectionHeader num="10" title="Be kind to kid you" sub="A photo. Mean words. Then kinder ones." />
+
+      <div className="mt-4 flex gap-2 flex-wrap">
+        {[1,2,3,4,5].map(s => (
+          <button key={s} className="btn" style={{
+            background: step === s ? 'var(--coral)' : (step > s ? 'var(--sage)' : 'var(--cream)'),
+            color: step === s || step > s ? 'var(--cream)' : 'var(--ink)',
+            padding: '0.4rem 0.8rem',
+            fontSize: '0.9rem'
+          }} onClick={() => setStep(s)}>
+            {s}
+          </button>
+        ))}
+      </div>
+
+      {step === 1 && (
+        <div className="dashed-card p-5 mt-5 text-center">
+          <div className="hand text-xl mb-3">a photo of kid you</div>
+          <p className="body" style={{ color: 'var(--ink-soft)' }}>find one where you're smiling. it matters.</p>
+          {draft.photo ? (
+            <img src={draft.photo} alt="kid you" className="mt-4 mx-auto rounded-xl border-2" style={{ maxHeight: 300, borderColor: 'var(--ink)' }} />
+          ) : (
+            <div className="mt-4 mx-auto w-48 h-48 rounded-xl flex items-center justify-center text-5xl" style={{ background: 'var(--paper-dark)', border: '2px dashed var(--ink-soft)' }}>
+              📷
+            </div>
+          )}
+          <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={e => onFile(e.target.files[0])} />
+          <div className="mt-4">
+            <button className="btn btn-primary" onClick={() => fileRef.current?.click()}>{draft.photo ? 'change photo' : 'upload photo'}</button>
+          </div>
+          <div className="mt-4">
+            <button className="btn" onClick={() => setStep(2)} disabled={!draft.photo}>next →</button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="dashed-card p-5 mt-5">
+          <div className="hand text-xl mb-2">the mean thing</div>
+          <p className="body mb-3" style={{ color: 'var(--ink-soft)' }}>
+            What's the last negative thing you told yourself? Self-imposed limit, logical-but-unhealthy invalidation, or the core-shaking thought. Write it all down.
+          </p>
+          <textarea rows={5} value={draft.mean} onChange={e => setDraft(d => ({ ...d, mean: e.target.value }))} autoFocus />
+          <div className="mt-4 flex gap-2">
+            <button className="btn" onClick={() => setStep(1)}>← back</button>
+            <button className="btn btn-primary" onClick={() => setStep(3)} disabled={!draft.mean.trim()}>next →</button>
+          </div>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div className="dashed-card p-5 mt-5 text-center">
+          <div className="hand text-xl mb-2">read it out loud — to them</div>
+          {draft.photo && <img src={draft.photo} alt="" className="mt-2 mx-auto rounded-xl border-2" style={{ maxHeight: 280, borderColor: 'var(--ink)' }} />}
+          <div className="entry-card mt-4 text-left" style={{ background: '#fff' }}>
+            <div className="body" style={{ fontSize: '1.1rem', lineHeight: 1.6 }}>{draft.mean}</div>
+          </div>
+          <p className="body mt-4" style={{ color: 'var(--ink-soft)', fontStyle: 'italic' }}>
+            Look at them while you read it. Notice how it feels.
+          </p>
+          <div className="mt-4 flex gap-2 justify-center">
+            <button className="btn" onClick={() => setStep(2)}>← back</button>
+            <button className="btn btn-primary" onClick={() => setStep(4)}>i'm ready to be kinder →</button>
+          </div>
+        </div>
+      )}
+
+      {step === 4 && (
+        <div className="dashed-card p-5 mt-5">
+          <div className="hand text-xl mb-2">be kind</div>
+          <p className="body mb-3" style={{ color: 'var(--ink-soft)' }}>
+            What would you tell that kid instead? Rephrase the mean thing. Imagine you're talking through a cup-and-string phone.
+          </p>
+          {draft.mean && (
+            <div className="entry-card mb-4" style={{ background: 'var(--paper-dark)', fontSize: '0.95rem' }}>
+              <div className="hand text-base mb-1" style={{ color: 'var(--ink-soft)' }}>what you said:</div>
+              <div className="body" style={{ fontStyle: 'italic' }}>{draft.mean}</div>
+            </div>
+          )}
+          <textarea rows={5} value={draft.kind} onChange={e => setDraft(d => ({ ...d, kind: e.target.value }))} placeholder="something kinder, encouraging, true…" autoFocus />
+          <div className="mt-4 flex gap-2">
+            <button className="btn" onClick={() => setStep(3)}>← back</button>
+            <button className="btn btn-primary" onClick={() => setStep(5)} disabled={!draft.kind.trim()}>next →</button>
+          </div>
+        </div>
+      )}
+
+      {step === 5 && (
+        <div className="dashed-card p-5 mt-5 text-center">
+          <div className="hand text-xl mb-2">now read this one — to them</div>
+          {draft.photo && <img src={draft.photo} alt="" className="mt-2 mx-auto rounded-xl border-2" style={{ maxHeight: 280, borderColor: 'var(--ink)' }} />}
+          <div className="entry-card mt-4 text-left" style={{ background: '#fff', borderColor: 'var(--coral)' }}>
+            <div className="body" style={{ fontSize: '1.1rem', lineHeight: 1.6 }}>{draft.kind}</div>
+          </div>
+          <p className="body mt-4" style={{ color: 'var(--ink-soft)', fontStyle: 'italic' }}>
+            That's what you say next time.
+          </p>
+          <div className="mt-4 flex gap-2 justify-center flex-wrap">
+            <button className="btn" onClick={() => setStep(4)}>← back</button>
+            <button className="btn btn-primary" onClick={save}>save & back to main</button>
+          </div>
+        </div>
+      )}
+
+      {entries.length > 0 && step === 1 && (
+        <details className="mt-8">
+          <summary className="hand text-xl cursor-pointer" style={{ color: 'var(--ink-soft)' }}>past sessions ({entries.length})</summary>
+          <div className="mt-3 space-y-3">
+            {entries.map(e => (
+              <div key={e.id} className="entry-card">
+                <div className="hand text-base mb-1" style={{ color: 'var(--ink-soft)' }}>{fmtDate(e.date)}</div>
+                <div className="body mb-2" style={{ fontStyle: 'italic' }}>{e.mean}</div>
+                <div className="body" style={{ color: 'var(--coral-dark)' }}>→ {e.kind}</div>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   SHARED BITS
+========================================================= */
+
+function SectionHeader({ num, title, sub }) {
+  return (
+    <div className="mt-2">
+      <div className="hand text-2xl" style={{ color: 'var(--coral)' }}>section {num}</div>
+      <h1 className="display text-4xl sm:text-5xl mt-1" style={{ fontWeight: 800, lineHeight: 1.05 }}>
+        <span className="marker-heading">{title}</span>
+      </h1>
+      {sub && <p className="hand text-xl mt-2" style={{ color: 'var(--ink-soft)' }}>{sub}</p>}
+    </div>
+  );
+}
+
+function Loading() {
+  return (
+    <div className="flex justify-center py-6">
+      <div className="flex gap-2">
+        <span className="dot w-2 h-2 rounded-full" style={{ background: 'var(--coral)' }} />
+        <span className="dot w-2 h-2 rounded-full" style={{ background: 'var(--coral)' }} />
+        <span className="dot w-2 h-2 rounded-full" style={{ background: 'var(--coral)' }} />
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   MOUNT
+========================================================= */
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+
+</body>
+</html>
